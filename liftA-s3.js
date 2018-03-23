@@ -32,6 +32,7 @@ SOFTWARE.
 
   module.exports = function (s3Config) {
   	return ((s3) => {
+			let arw = require('lifta')();
   		function cb(x, cont, p, advance, err, data) {
   			if (err) {
   				x = arw.Error(err, x);
