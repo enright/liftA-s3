@@ -23,72 +23,67 @@ SOFTWARE.
 */
 (function () {
 
-	'use strict';
+  'use strict';
 
-	function awsS3(s3Config) {
-		let S3 = require('aws-sdk/clients/s3');
-		return new S3(s3Config);
-	}
+  function awsS3(s3Config) {
+    let S3 = require('aws-sdk/clients/s3');
+    return new S3(s3Config);
+  }
 
-  module.exports = function (s3Config) {
-  	return ((s3) => {
-			let arw = require('lifta')();
-  		function cb(x, cont, p, advance, err, data) {
-  			if (err) {
-  				x = arw.Error(err, x);
-  			} else {
-  				x = [data, x.second()];
-  			}
-  			advance();
-  			cont(x, p);
-  		}
+  module.exports = (arw, s3Config) => {
+    return ((s3) => {
+      let arw = require('lifta')();
+
+      let cb = (x, cont, p, advance, err, data) => {
+        if (err) {
+          x = arw.Error(err, x);
+        } else {
+          x = data;
+        }
+        advance();
+        cont(x, p);
+      };
 
       function s3ErrorBack(method) {
-        return (reqParams) => function (x, cont, p) {
-    			let cancelId;
-    			let advance = () => p.advance(cancelId);
-    			let req = s3[method](reqParams(x), cb.bind(undefined, x, cont, p, advance));
-    			cancelId = p.add(() => req.abort());
-    			return cancelId;
-    		};
-      }
-
-      function waitForA(state, params) {
-        return function (x, cont, p) {
-    			let cancelId;
-    			let advance = () => p.advance(cancelId);
-    			let req = s3.waitFor(state(x), params(x), cb.bind(undefined, x, cont, p, advance));
-    			cancelId = p.add(() => req.abort());
-    			return cancelId;
+        return (x, cont, p) => {
+          let cancelId;
+          let advance = () => p.advance(cancelId);
+          let req = s3[method](x, cb.bind(undefined, x, cont, p, advance));
+          cancelId = p.add(() => req.abort());
+          return cancelId;
         };
       }
 
-      function getSignedURLA(operation, params) {
-        return function (x, cont, p) {
-    			let cancelId;
-    			let advance = () => p.advance(cancelId);
-    			let req = s3.waitFor(operation(x), params(x), cb.bind(undefined, x, cont, p, advance));
-    			cancelId = p.add(() => req.abort());
-    			return cancelId;
-        };
-      }
+      let waitForA = (x, cont, p) => {
+        let cancelId;
+        let advance = () => p.advance(cancelId);
+        let req = s3.waitFor(x.state, x.params, cb.bind(undefined, x, cont, p, advance));
+        cancelId = p.add(() => req.abort());
+        return cancelId;
+      };
 
-      function uploadA(params, options) {
-        return function (x, cont, p) {
-    			let cancelId;
-          let req;
-    			let advance = () => p.advance(cancelId);
-          if (options) {
-            req = s3.upload(params(x), options(x), cb.bind(undefined, x, cont, p, advance));
-          } else {
-            req = s3.upload(params(x), cb.bind(undefined, x, cont, p, advance));
-          }
-    			cancelId = p.add(() => req.abort());
-    			return cancelId;
-        };
-      }
+      let getSignedURLA = (x, cont, p) => {
+        let cancelId;
+        let advance = () => p.advance(cancelId);
+        let req = s3.getSignedUrl(x.operation, x.params, cb.bind(undefined, x, cont, p, advance));
+        cancelId = p.add(() => req.abort());
+        return cancelId;
+      };
 
-  		return {
+      let uploadA = (x, cont, p) => {
+        let cancelId;
+        let req;
+        let advance = () => p.advance(cancelId);
+        if (x.options) {
+          req = s3.upload(x.params, x.options, cb.bind(undefined, x, cont, p, advance));
+        } else {
+          req = s3.upload(x.params, cb.bind(undefined, x, cont, p, advance));
+        }
+        cancelId = p.add(() => req.abort());
+        return cancelId;
+      };
+
+      return {
         abortMultipartUploadA: s3ErrorBack('abortMultipartUpload'),
         completeMultipartUploadA: s3ErrorBack('completeMultipartUpload'),
         copyObjectA: s3ErrorBack('copyObject'),
@@ -166,8 +161,8 @@ SOFTWARE.
         uploadPartA: s3ErrorBack('uploadPart'),
         uploadPartCopyA: s3ErrorBack('uploadPartCopy'),
         waitForA: waitForA
-  		};
-  	})(awsS3(s3Config));
+      };
+    })(awsS3(s3Config));
   };
 
 })();

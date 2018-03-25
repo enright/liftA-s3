@@ -1,6 +1,6 @@
 {
   "name": "lifta-s3",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "asynch arrows for amazon aws s3",
   "main": "liftA-s3.js",
   "jshintConfig": {
