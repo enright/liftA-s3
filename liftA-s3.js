@@ -30,13 +30,12 @@ SOFTWARE.
     return new S3(s3Config);
   }
 
-  module.exports = (arw, s3Config) => {
+  module.exports = (s3Config) => {
     return ((s3) => {
-      let arw = require('lifta')();
-
       let cb = (x, cont, p, advance, err, data) => {
         if (err) {
-          x = arw.Error(err, x);
+          err.x = x;
+          x = err;
         } else {
           x = data;
         }
