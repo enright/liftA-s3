@@ -1,6 +1,6 @@
 {
   "name": "lifta-s3",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "asynch arrows for amazon aws s3",
   "main": "liftA-s3.js",
   "jshintConfig": {
@@ -13,6 +13,6 @@
   "license": "MIT",
   "dependencies": {
     "aws-sdk": "^2.165.0",
-    "lifta": "0.0.13"
+    "lifta": "0.0.15"
   }
 }
